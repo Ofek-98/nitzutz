@@ -114,8 +114,8 @@ function Build-Html([string]$extraHead) {
 [System.IO.File]::WriteAllBytes((Join-Path $site 'apple-touch-icon.png'), (New-NitzutzPng 180 0.78 '#FFF1D2'))
 $manifest = @'
 {
-  "name": "ניצוץ",
-  "short_name": "ניצוץ",
+  "name": "__APP_NAME__",
+  "short_name": "__APP_NAME__",
   "description": "Learn to work with Claude, a little every day",
   "lang": "he",
   "dir": "rtl",
@@ -131,7 +131,8 @@ $manifest = @'
   ]
 }
 '@
-[System.IO.File]::WriteAllText((Join-Path $site 'manifest.webmanifest'), $manifest, $utf8)
+$appName = -join [char[]](0x05E0, 0x05D9, 0x05E6, 0x05D5, 0x05E5)   # the app's Hebrew name, built from code points to keep this file ASCII
+[System.IO.File]::WriteAllText((Join-Path $site 'manifest.webmanifest'), $manifest.Replace('__APP_NAME__', $appName), $utf8)
 $siteHead = "<link rel=""manifest"" href=""manifest.webmanifest"">`n" +
   "<link rel=""apple-touch-icon"" href=""apple-touch-icon.png"">`n" +
   "<meta name=""apple-mobile-web-app-capable"" content=""yes"">`n" +
