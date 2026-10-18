@@ -7218,25 +7218,34 @@ window.CURRICULUM.push({
     return base + '#sync=' + encodeURIComponent(btoa(parts.join('|')));
   };
 
-  function readPairing() {
-    const m = location.hash.match(/^#sync=(.+)$/);
+  // Accepts a full pairing link (…#sync=…) and returns {token, gist, key}, or null.
+  sync.parsePairing = function (text) {
+    const m = String(text || '').trim().match(/#sync=([^\s]+)/);
     if (!m) return null;
-    try { history.replaceState(null, '', location.href.split('#')[0]); } catch (e) { /* ignore */ }
     try {
       const parts = atob(decodeURIComponent(m[1])).split('|');
       if (parts.length >= 2 && parts[0] && parts[1]) return { token: parts[0], gist: parts[1], key: parts[2] || '' };
     } catch (e) { /* malformed link */ }
     return null;
+  };
+  function readPairing() {
+    if (!/^#sync=/.test(location.hash)) return null;
+    const pair = sync.parsePairing(location.hash);
+    try { history.replaceState(null, '', location.href.split('#')[0]); } catch (e) { /* ignore */ }
+    return pair;
   }
+  sync.pair = async function (pair) {
+    if (pair.key) N.ai.setApiKey(pair.key);
+    await sync.connect(pair.token, pair.gist);
+    if (!N.state.profile.onboarded) { N.state.profile.onboarded = true; N.save(true); }
+  };
 
   sync.init = async function () {
     if (N.hosted) return;
     const pair = readPairing();
     if (pair) {
-      if (pair.key) N.ai.setApiKey(pair.key);
       try {
-        await sync.connect(pair.token, pair.gist);
-        if (!N.state.profile.onboarded) { N.state.profile.onboarded = true; N.save(true); }
+        await sync.pair(pair);
         N.toast('המכשיר חובר לסנכרון', 'cloud');
         N.render();
       } catch (e) {
@@ -7325,14 +7334,15 @@ window.CURRICULUM.push({
         out);
       return card;
     }
-    const input = h('input', { class: 'search', id: 'gh-token', type: 'password', autocomplete: 'off', spellcheck: 'false', dir: 'ltr', placeholder: 'github_pat_…', 'aria-label': 'GitHub token' });
+    const input = h('input', { class: 'search', id: 'gh-token', type: 'password', autocomplete: 'off', spellcheck: 'false', dir: 'ltr', placeholder: 'github_pat_…', 'aria-label': 'GitHub token או קישור חיבור' });
     const go = h('button', { class: 'btn btn-primary btn-sm', type: 'button' }, 'חבר');
     go.addEventListener('click', function () {
       const v = input.value.trim();
       if (!v) { input.focus(); return; }
       go.disabled = true;
       out.textContent = 'מתחבר ל־GitHub…';
-      sync.connect(v).then(function () {
+      const pair = sync.parsePairing(v);
+      (pair ? sync.pair(pair) : sync.connect(v)).then(function () {
         N.toast('הסנכרון פעיל', 'cloud');
         N.render();
         setTimeout(function () { const el = document.getElementById('sync-card'); if (el) el.scrollIntoView({ block: 'center' }); }, 60);
@@ -7340,7 +7350,7 @@ window.CURRICULUM.push({
     });
     input.addEventListener('keydown', function (e) { if (e.key === 'Enter') go.click(); });
     card.append(head,
-      h('p', { class: 'muted' }, 'רוצה לראות את אותה התקדמות במחשב ובטלפון? מחברים פעם אחת את חשבון ה־GitHub שלך, וההתקדמות נשמרת שם בקובץ פרטי.'),
+      h('p', { class: 'muted' }, 'רוצה לראות את אותה התקדמות במחשב ובטלפון? מחברים פעם אחת את חשבון ה־GitHub שלך, וההתקדמות נשמרת שם בקובץ פרטי. במכשיר נוסף אפשר להדביק כאן גם קישור חיבור.'),
       h('div', { class: 'row', style: { flexWrap: 'nowrap' } }, h('div', { class: 'grow' }, input), go),
       out,
       h('details', { class: 'more' }, h('summary', null, 'איך יוצרים token'),
