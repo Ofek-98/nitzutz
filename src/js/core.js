@@ -4,6 +4,31 @@
   document.documentElement.lang = 'he';
   document.documentElement.dir = 'rtl';
 
+  // ---------- theme: 'system' | 'light' | 'dark', kept per device ----------
+  const THEME_LS = 'nitzutz.theme';
+  const hostedPage = !!(window.claude && typeof window.claude.use === 'function');
+  const darkQuery = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+  N.getTheme = function () {
+    let t = '';
+    try { t = localStorage.getItem(THEME_LS) || ''; } catch (e) { /* storage unavailable */ }
+    return t === 'light' || t === 'dark' ? t : 'system';
+  };
+  N.applyTheme = function () {
+    if (hostedPage) return; // inside claude.ai the viewer owns the theme
+    const t = N.getTheme();
+    if (t === 'system') document.documentElement.removeAttribute('data-theme');
+    else document.documentElement.setAttribute('data-theme', t);
+    const dark = t === 'dark' || (t === 'system' && !!darkQuery && darkQuery.matches);
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', dark ? '#0E1124' : '#F3F5FB');
+  };
+  N.setTheme = function (t) {
+    try { if (t === 'system') localStorage.removeItem(THEME_LS); else localStorage.setItem(THEME_LS, t); } catch (e) { /* storage unavailable */ }
+    N.applyTheme();
+  };
+  if (darkQuery && darkQuery.addEventListener) darkQuery.addEventListener('change', function () { N.applyTheme(); });
+  N.applyTheme();
+
   // ---------- events ----------
   const handlers = {};
   N.on = function (ev, fn) { (handlers[ev] = handlers[ev] || []).push(fn); };
@@ -178,6 +203,7 @@
       stats: { answered: 0, correct: 0, perfect: 0, bestCombo: 0, lightning: 0, reviews: 0, writes: 0, lessons: 0, ms: 0, tutor: 0 },
       skin: 'spark',
       owned: ['spark'],
+      avatar: 'spark',
       chat: [],
       daily: null
     };
@@ -500,7 +526,7 @@
     review: { title: function () { return 'סיים סבב חזרה'; }, target: function () { return 1; }, ev: 'review', gems: 10, icon: 'refresh' },
     lightning: { title: function (n) { return n + ' נכונות בסבב ברק'; }, target: function () { return 10; }, ev: 'lightning', max: true, gems: 15, icon: 'bolt' },
     correct: { title: function (n) { return 'ענה נכון על ' + n + ' תרגילים'; }, target: function () { return 20; }, ev: 'correct', gems: 10, icon: 'check' },
-    tutor: { title: function () { return 'שאל את ניצי שאלה'; }, target: function () { return 1; }, ev: 'tutor', gems: 10, icon: 'chat' }
+    tutor: { title: function () { return 'שאל את ' + N.guideName() + ' שאלה'; }, target: function () { return 1; }, ev: 'tutor', gems: 10, icon: 'chat' }
   };
   N.ensureQuests = function () {
     const q = N.state.quests, t = N.today();
@@ -566,7 +592,7 @@
     { id: 'm6', t: 'איש שטח', d: '6 משימות שטח', icon: 'flag', test: function (s) { return Object.keys(s.missions).length >= 6; } },
     { id: 'x1k', t: 'אלף ניצוצות', d: '1,000 XP', icon: 'sparkle', test: function (s) { return s.xp >= 1000; } },
     { id: 'x5k', t: 'זיקוקים', d: '5,000 XP', icon: 'sparkle', test: function (s) { return s.xp >= 5000; } },
-    { id: 'tutor', t: 'שאלה טובה', d: 'שאלת את ניצי', icon: 'chat', test: function (s) { return s.stats.tutor >= 1; } }
+    { id: 'tutor', t: 'שאלה טובה', d: 'שאלת את המורה', icon: 'chat', test: function (s) { return s.stats.tutor >= 1; } }
   ];
   N.checkBadges = function () {
     const s = N.state, earned = [];

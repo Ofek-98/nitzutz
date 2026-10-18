@@ -59,7 +59,7 @@
       h('button', { class: 'chip lvl', type: 'button', title: 'רמה', 'aria-label': 'רמה ' + li.lvl, onclick: function () { N.go('me'); } },
         h('span', { class: 'lvl-badge' }, String(li.lvl)), h('span', { class: 'sr' }, li.title)));
   }
-  function brand() { return h('div', { class: 'brand' }, N.mascot('idle'), 'ניצוץ'); }
+  function brand() { return h('div', { class: 'brand' }, N.mascot('idle', { avatar: 'spark' }), 'ניצוץ'); }
   function topbar() { return h('header', { class: 'topbar' }, brand(), chips()); }
   function sidenav() {
     return h('nav', { class: 'sidenav', 'aria-label': 'ניווט ראשי' }, brand(),
@@ -396,7 +396,7 @@
         disabled: lpool < 5, onClick: function () { N.runLightning(); }
       }),
       card({
-        title: 'שאל את ניצי', icon: 'chat', color: 'var(--teal)',
+        title: 'שאל את ' + N.guideName(), icon: 'chat', color: 'var(--teal)',
         text: aiOn ? 'מורה פרטי לכל שאלה על קלוד, פרומפטים ובנייה עם AI.' : N.hosted ? 'המורה זמין כשקלוד מחובר לאפליקציה.' : 'חבר את קלוד בפרופיל כדי להפעיל את המורה.',
         disabled: !aiOn && N.hosted, onClick: function () { if (aiOn) N.go('practice', 'tutor'); else goAiSettings(); },
         pills: aiOn ? [h('span', { class: 'pill ai' }, N.icon('sparkle', { size: 14 }), 'קלוד')] : null
@@ -439,7 +439,7 @@
     if (d && d.day === day && d.item) { run(d.item); return; }
     if (N.ai.available()) {
       let cancelled = false;
-      const m = N.modal({ title: 'מכין את אתגר היום', body: N.thinking('ניצי ממציא תרחיש בשבילך…'), onClose: function () { cancelled = true; } });
+      const m = N.modal({ title: 'מכין את אתגר היום', body: N.thinking(N.guideName() + ' ממציא תרחיש בשבילך…'), onClose: function () { cancelled = true; } });
       try {
         const g = await N.ai.daily(N.currentUnit(), day);
         if (cancelled) return;
@@ -468,11 +468,11 @@
   function tutorView(view) {
     view.append(h('div', { class: 'row', style: { flexWrap: 'nowrap' } },
       h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'חזרה לתרגול', onclick: function () { N.go('practice'); } }, N.icon('back', { size: 26 })),
-      h('div', { class: 'grow page-h' }, h('h1', null, 'שאל את ניצי'), h('p', { class: 'muted small' }, 'מורה פרטי שמכיר את מה שלמדת')),
+      h('div', { class: 'grow page-h' }, h('h1', null, 'שאל את ' + N.guideName()), h('p', { class: 'muted small' }, 'מורה פרטי שמכיר את מה שלמדת')),
       N.state.chat.length ? h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onclick: function () { N.state.chat = []; N.save(); N.render(); } }, N.icon('trash', { size: 16 }), 'שיחה חדשה') : null));
     if (!N.ai.available()) {
       view.append(h('div', { class: 'card' },
-        h('p', { class: 'muted' }, N.hosted ? 'המורה עובד כשקלוד מחובר לאפליקציה ומאושר לשימוש.' : 'כדי לדבר עם ניצי, חבר את קלוד עם מפתח API בפרופיל.'),
+        h('p', { class: 'muted' }, N.hosted ? 'המורה עובד כשקלוד מחובר לאפליקציה ומאושר לשימוש.' : 'כדי לדבר עם ' + N.guideName() + ', חבר את קלוד עם מפתח API בפרופיל.'),
         N.hosted ? null : h('button', { class: 'btn btn-primary btn-sm', type: 'button', style: { justifySelf: 'start' }, onclick: goAiSettings }, 'לחיבור קלוד')));
       return;
     }
@@ -484,11 +484,11 @@
     }
     if (!N.state.chat.length) {
       list.append(h('div', { class: 'row', style: { flexWrap: 'nowrap', alignItems: 'flex-end', justifySelf: 'end' } },
-        h('div', { class: 'msg bot' }, N.rich('היי! אני ניצי. אפשר לשאול אותי כל דבר על קלוד, על כתיבת פרומפטים, על סוכנים ועל בנייה עם AI. אפשר גם לבקש ממני תרגיל קטן על מה שלמדת.')),
+        h('div', { class: 'msg bot' }, N.rich('היי! אני ' + N.guideName() + '. אפשר לשאול אותי כל דבר על קלוד, על כתיבת פרומפטים, על סוכנים ועל בנייה עם AI. אפשר גם לבקש ממני תרגיל קטן על מה שלמדת.')),
         N.mascot('happy', { size: 46 })));
     }
     N.state.chat.forEach(function (m) { list.append(bubble(m.role, m.content)); });
-    const ta = h('textarea', { id: 'tutor-input', rows: '1', dir: 'auto', placeholder: 'מה תרצה לשאול?', 'aria-label': 'שאלה לניצי' });
+    const ta = h('textarea', { id: 'tutor-input', rows: '1', dir: 'auto', placeholder: 'מה תרצה לשאול?', 'aria-label': 'שאלה ל' + N.guideName() });
     const send = h('button', { class: 'btn btn-primary btn-sm', type: 'button', 'aria-label': 'שלח' }, N.icon('send', { size: 18 }));
     let busy = false;
     function grow() { ta.style.height = 'auto'; ta.style.height = Math.min(160, ta.scrollHeight) + 'px'; }
@@ -658,7 +658,7 @@
       N.stat('pen', wAvg == null ? '—' : wAvg, 'ממוצע כתיבה', 'var(--coral)'),
       N.stat('clock', Math.round(s.stats.ms / 60000), 'דקות למידה', 'var(--gem)'),
       N.stat('gem', s.gems, 'יהלומים', 'var(--gem)')));
-    view.append(weekCard(), heatCard(), badgesCard(), shopCard(), N.syncCard ? N.syncCard() : null, aiCard(), settingsCard(), backupCard());
+    view.append(avatarCard(), weekCard(), heatCard(), badgesCard(), shopCard(), N.syncCard ? N.syncCard() : null, aiCard(), settingsCard(), backupCard());
   };
   function aiCard() {
     if (N.hosted) {
@@ -829,7 +829,7 @@
     N.SKINS.forEach(function (sk) {
       const owned = s.owned.indexOf(sk.id) >= 0, on = s.skin === sk.id;
       items.push(h('div', { class: 'shop-item' },
-        N.mascot('happy', { skin: sk.id }),
+        N.mascot('happy', { skin: sk.id, avatar: 'spark' }),
         h('div', null, h('b', null, 'ניצי: ' + sk.name), h('div', { class: 'muted small' }, on ? 'בשימוש עכשיו' : owned ? 'שלך' : 'צבע חדש לניצי')),
         on ? h('span', { class: 'pill good' }, N.icon('check', { size: 14 }), 'פעיל')
           : owned ? h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onclick: function () { s.skin = sk.id; N.save(); N.render(); } }, 'בחר')
@@ -863,12 +863,52 @@
         h('b', null, g.t), h('span', null, g.d, ' · ', N.ltr(g.v + ' XP')));
     }));
   }
+  // ---------- guide picker ----------
+  function avatarGrid(onPick) {
+    return h('div', { class: 'avatar-grid', role: 'radiogroup', 'aria-label': 'בחירת מדריך' }, N.AVATARS.map(function (a) {
+      const on = N.avatar().id === a.id;
+      return h('button', {
+        type: 'button', class: 'avatar-opt' + (on ? ' on' : ''), role: 'radio', 'aria-checked': String(on),
+        onclick: function () {
+          if (N.state.avatar === a.id) return;
+          N.state.avatar = a.id;
+          N.save();
+          N.sfx('tap');
+          onPick(a);
+        }
+      }, N.mascot(on ? 'happy' : 'idle', { avatar: a.id, anim: on ? 'bob' : null }), h('b', null, a.name), h('span', null, a.desc));
+    }));
+  }
+  function avatarCard() {
+    return h('div', { class: 'card', id: 'avatar-card' },
+      h('div', { class: 'card-h' }, h('h3', null, 'המדריך שלך'), h('span', { class: 'muted small' }, 'מלווה אותך בשיעורים ובצ׳אט')),
+      avatarGrid(function (a) {
+        N.render();
+        setTimeout(function () { const el = document.getElementById('avatar-card'); if (el) el.scrollIntoView({ block: 'center' }); }, 30);
+        N.toast(a.name + ' מצטרף אליך!', 'sparkle');
+      }));
+  }
+  const THEMES = [
+    { v: 'system', t: 'אוטומטי', icon: 'phone' },
+    { v: 'light', t: 'בהיר', icon: 'sun' },
+    { v: 'dark', t: 'כהה', icon: 'moon' }
+  ];
+  function themeSeg() {
+    const cur = N.getTheme();
+    return h('div', { class: 'seg theme-seg', role: 'radiogroup', 'aria-label': 'מצב תצוגה' }, THEMES.map(function (o) {
+      const on = cur === o.v;
+      return h('button', { type: 'button', class: on ? 'on' : '', role: 'radio', 'aria-checked': String(on), onclick: function () { N.setTheme(o.v); N.render(); setTimeout(function () { const el = document.getElementById('settings-card'); if (el) el.scrollIntoView({ block: 'center' }); }, 30); } },
+        N.icon(o.icon, { size: 20 }), h('b', null, o.t));
+    }));
+  }
+
   function settingsCard() {
     const p = N.state.profile;
     const snd = h('button', { class: 'toggle' + (p.sound ? ' on' : ''), type: 'button', role: 'switch', 'aria-checked': String(!!p.sound), 'aria-label': 'צלילים' });
     snd.addEventListener('click', function () { p.sound = !p.sound; N.save(); snd.classList.toggle('on', p.sound); snd.setAttribute('aria-checked', String(p.sound)); if (p.sound) N.sfx('good'); });
-    return h('div', { class: 'card' },
+    return h('div', { class: 'card', id: 'settings-card' },
       h('h3', null, 'הגדרות'),
+      N.hosted ? null : h('div', { class: 'stack', style: { gap: '8px' } }, h('b', null, 'מצב תצוגה'), themeSeg(), h('span', { class: 'muted small' }, 'נשמר בכל מכשיר בנפרד.')),
       h('div', { class: 'stack', style: { gap: '8px' } }, h('b', null, 'יעד יומי'), goalSeg(function () { N.render(); })),
       h('div', { class: 'switch' }, h('div', null, h('b', null, 'צלילים'), h('div', { class: 'muted small' }, 'צלילים קצרים לתשובות ולהישגים')), snd),
       h('div', { class: 'switch' }, h('div', null, h('b', null, 'שמירה'), syncLine())),
@@ -915,11 +955,18 @@
         ];
       } else if (step === 2) {
         content = [
+          h('div', { class: 'speech' }, 'מי ילווה אותך בדרך?'),
+          avatarGrid(draw),
+          h('p', { class: 'small' }, 'אפשר להחליף בכל רגע בפרופיל.'),
+          h('button', { class: 'btn btn-primary btn-block', type: 'button', onclick: function () { step = 3; draw(); } }, 'ממשיכים עם ' + N.guideName())
+        ];
+      } else if (step === 3) {
+        content = [
           N.mascot('idle', { anim: 'bob' }),
           h('div', { class: 'speech' }, 'מה היעד היומי שלך?'),
           goalSeg(draw),
           h('p', { class: 'small' }, 'אפשר לשנות בכל רגע בפרופיל.'),
-          h('button', { class: 'btn btn-primary btn-block', type: 'button', onclick: function () { step = 3; draw(); } }, 'המשך')
+          h('button', { class: 'btn btn-primary btn-block', type: 'button', onclick: function () { step = 4; draw(); } }, 'המשך')
         ];
       } else {
         content = [
